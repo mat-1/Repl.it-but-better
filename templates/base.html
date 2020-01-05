@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+{% block head %}
+<title>{% block title %}Repl.it but better{% endblock %}</title>
+<link rel="icon" type="image/png" href="/static/icon.png">
+<link rel="stylesheet" href="/static/main.css">
+<meta name="theme-color" content="#ff0000">
+<meta name="description" content="{% block description %}insert description here{% endblock %}">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="{{ self.title() }}">
+<meta property="og:description" content="{{ self.description() }}">
+<meta property="og:site_name" content="Repl.it but better">
+<meta property="og:type" content="website"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+{% endblock %}
+</head>
+<body>
+{% if back_location %}
+<nav>
+	<a href="{{ back_location }}">
+		<svg class="backArrow" height="43" width="23">
+			<path d="M 22 0 l -20 20 l 20 20" stroke-width="3" fill="none"></path>
+		</svg>
+	</a>
+</nav>
+{% endif %}
+<main>
+{% block body %}
+	There's nothing here yet.
+{% endblock %}
+</main>
+</html>
