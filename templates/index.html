@@ -1,1 +1,14 @@
 {% extends "base.html" %}
+
+{% block main %}
+<ul>
+	{% for repl in repls %}
+		<li class="replItemContainer">
+			<a href="{{ repl.url }}" class="replItem">
+				<h2 class="replItemTitle">{{ repl.title }}</h2>
+				<img class="replItemIcon" src="{{ repl.lang.icon }}" alt="{{ repl.lang.displayName }}">
+			</a>
+		</li>
+	{% endfor %}
+</ul>
+{% endblock %}

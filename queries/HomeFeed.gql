@@ -1,0 +1,112 @@
+query HomeFeed($count: Int) {
+  currentUser {
+    id
+    seenHomeFeedTour: tourSeen(name: "home-feed")
+    feed(count: $count) {
+      items {
+        id
+        ...PostsFeedItemPost
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment PostsFeedItemPost on Post {
+  id
+  title
+  preview(removeMarkdown: true, length: 150)
+  url
+  commentCount
+  isPinned
+  isLocked
+  isAnnouncement
+  timeCreated
+  isAnswered
+  isAnswerable
+  ...PostVoteControlPost
+  ...PostLinkPost
+  user {
+    id
+    username
+    isHacker
+    image
+    isModerator: hasRole(role: MODERATOR)
+    isAdmin: hasRole(role: ADMIN)
+    ...UserLabelUser
+    ...UserLinkUser
+    __typename
+  }
+  repl {
+    id
+    lang {
+      id
+      icon
+      key
+      displayName
+      tagline
+      __typename
+    }
+    __typename
+  }
+  board {
+    id
+    name
+    slug
+    url
+    color
+    __typename
+  }
+  recentComments(count: 3) {
+    id
+    ...SimpleCommentComment
+    __typename
+  }
+  __typename
+}
+
+fragment PostVoteControlPost on Post {
+  id
+  voteCount
+  canVote
+  hasVoted
+  __typename
+}
+
+fragment PostLinkPost on Post {
+  id
+  url
+  __typename
+}
+
+fragment UserLabelUser on User {
+  id
+  username
+  karma
+  ...UserLinkUser
+  __typename
+}
+
+fragment UserLinkUser on User {
+  id
+  url
+  username
+  __typename
+}
+
+fragment SimpleCommentComment on Comment {
+  id
+  user {
+    id
+    isModerator: hasRole(role: MODERATOR)
+    isAdmin: hasRole(role: ADMIN)
+    ...UserLabelUser
+    ...UserLinkUser
+    __typename
+  }
+  preview(removeMarkdown: true, length: 500)
+  timeCreated
+  __typename
+}

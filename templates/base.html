@@ -3,8 +3,8 @@
 <head>
 {% block head %}
 <title>{% block title %}Repl.it but better{% endblock %}</title>
-<link rel="icon" type="image/png" href="/static/icon.png">
-<link rel="stylesheet" href="/static/main.css">
+<link rel="stylesheet" href="/main.css?{{range(1, 10000) | random}}">
+<link rel="stylesheet" href="/custom.css?{{range(1, 10000) | random}}">
 <meta name="theme-color" content="#ff0000">
 <meta name="description" content="{% block description %}insert description here{% endblock %}">
 <meta name="robots" content="index, follow">
@@ -28,7 +28,7 @@
 </nav>
 {% endif %}
 <main>
-{% block body %}
+{% block main %}
 	There's nothing here yet.
 {% endblock %}
 </main>

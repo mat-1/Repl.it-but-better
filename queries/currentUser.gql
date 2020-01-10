@@ -1,0 +1,19 @@
+query currentUser {
+  currentUser {
+    id
+    username
+    subscription {
+      planId
+      __typename
+    }
+    timeCreated
+    ranUnnamedReplsMigration: tourSeen(name: "move_unnamed_repls")
+    quickstartGate: gate(feature: "dashboard-quickstart")
+    githubImportGate: gate(feature: "github-import")
+    unnamedFolderGate: gate(feature: "unnamed-folder")
+    variableHackerGate: gate(feature: "variable-hacker")
+    mp2gate: gate(feature: "ot")
+    screenshotGate: gate(feature: "repl-screenshots")
+    __typename
+  }
+}

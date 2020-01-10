@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "runner"
+version = "0.1.0"
+description = ""
+authors = ["mat <replit@matdoes.dev>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+jinja2 = "^2.10"
+aiohttp = "^3.6"
+templates = "^0.0.5"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

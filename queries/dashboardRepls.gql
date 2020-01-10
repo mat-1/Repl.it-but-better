@@ -1,0 +1,49 @@
+query dashboardRepls($count: Int, $after: String, $before: String, $order: String, $lang: String, $search: String, $isStarred: Boolean, $folderId: String) {
+  dashboardRepls(count: $count, after: $after, before: $before, order: $order, lang: $lang, search: $search, isStarred: $isStarred, folderId: $folderId) {
+    items {
+      id
+      ...ReplsDashboardReplItemRepl
+      __typename
+    }
+    pageInfo {
+      ...ReplsDashboardPaginationPageInfo
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment ReplsDashboardReplItemRepl on Repl {
+  id
+  slug
+  url
+  title
+  lang {
+    displayName
+    icon
+  }
+  timeCreated
+  isPrivate
+  isStarred
+  pinnedToProfile
+  folderId
+  config {
+    isServer
+    __typename
+  }
+  ...EditReplModalRepl
+  isRenamed
+  __typename
+}
+
+fragment EditReplModalRepl on Repl {
+  title
+  description
+  __typename
+}
+
+fragment ReplsDashboardPaginationPageInfo on PageInfo {
+  hasNextPage
+  nextCursor
+  __typename
+}

@@ -1,0 +1,25 @@
+body {
+	margin: 0;
+	font-family: sans-serif;
+	background-color: var(--bg);
+	color: var(--bg-text);
+}
+
+#editor {
+  margin: 0;
+  width: 100vw;
+  display: block
+}
+main {
+  min-height: 100%;
+}
+.replItem {
+	
+}
+.replItemTitle {
+	display: inline-block;
+	color: var(--repl-item-title-text, var(--bg-text));
+}
+.replItemIcon {
+	height: 1em;
+}

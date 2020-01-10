@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+<script>
+window.replData = {{ repl|json|safe }}
+window.token = "{{ token }}"
+</script>
+<script src="/crosis.js"></script>
+<script src="/repl.js"></script>
+<script src="/ace/ace.js"></script>
+<script>
+</script>
+{% endblock %}
+{% block main %}
+<pre id="editor">
+</pre>
+{% endblock %}

@@ -1,1 +1,12 @@
 {% extends "base.html" %}
+
+{% block main %}
+{% if message %}
+	<p>{{ message }}</p>
+{% endif %}
+<form method="post">
+	<input name="username" placeholder="Username">
+	<input name="password" placeholder="Password" type="password">
+	<button>Submit</button>
+</form>
+{% endblock %}
