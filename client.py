@@ -2,7 +2,10 @@ import aiohttp
 
 requested_with = 'replit-but-better'
 
+# does an http post request
 async def post_request(url, json, cookies={}):
+	# if it's a relative path, add repl.it to
+	# the beginning
 	if url[0] == '/': url = 'https://repl.it' + url
 	async with aiohttp.ClientSession() as s:
 		r = await s.post(
@@ -50,6 +53,8 @@ async def repl_data(user, slug, sid=None):
 	)
 	return await r.json()
 
+# Sends a query to repl.it/graphql using the
+# operation data from the queries folder
 async def graphql(operation_name, sid=None, **variables):
 	with open(f'queries/{operation_name}.gql', 'r') as f:
 		query = f.read()
@@ -66,9 +71,11 @@ async def graphql(operation_name, sid=None, **variables):
 	)
 	return await r.json()
 
+# Shortcut for graphql currentUser
 async def current_user(sid):
 	return await graphql('currentUser', sid)
 
+# Shortcut for graphql dashboardRepls
 async def dashboard_repls(sid):
 	return await graphql('dashboardRepls', sid)
 
@@ -85,7 +92,7 @@ async def current_username(sid):
 	return r['data']['currentUser']['username']
 
 async def gen_repl_token(repl_id, sid, api_key):
-	print(repl_id, sid, api_key)
+	print('creating repl token')
 	r = await post_request(
 		f'/api/v0/repls/{repl_id}/token',
 		{
@@ -96,5 +103,4 @@ async def gen_repl_token(repl_id, sid, api_key):
 		}
 	)
 	token = await r.json()
-	print('token:', token)
 	return token
