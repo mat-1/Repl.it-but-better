@@ -1,5 +1,20 @@
 const editorElId = 'editor'
+const terminalElId = 'terminal'
+const runButtonElId = 'runButton'
 
+function createRef() {
+	var result = '';
+	var characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+	var charactersLength = characters.length;
+	for (var i = 0; i < 11; i++) {
+		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+	}
+	return result;
+}
+
+function isEmptyObject(obj) {
+	return Object.entries(obj).length === 0 && obj.constructor === Object
+}
 
 function setupAce() {
 	var EditSession = ace.require('ace/edit_session').EditSession;
@@ -10,7 +25,14 @@ function setupAce() {
 	);
 	aceEditor.setTheme('ace/theme/monokai');
 	aceEditor.session.setMode('ace/mode/python');
-	aceEditor.setOption("maxLines", 40);
+	aceEditor.setOptions({
+		'maxLines': 40,
+		'copyWithEmptySelection': true,
+		'useSoftTabs': true
+	})
+	aceEditor.session.setOptions({
+		'tabSize': 2
+	})
 	editor.EditSession = EditSession
 	editor.Range = Range
 	editor.aceEditor = aceEditor
@@ -35,22 +57,33 @@ function setupAce() {
 				newOps.push({
 					delete: endPos - skip
 				})
-				console.log('endpos', endPos, 'skip', skip)
+				// console.log('endpos', endPos, 'skip', skip)
 			}
+			var createdRef = createRef()
 			var query = {
 				'ot': {
 					version: editor.otVersion,
 					ops: newOps
-				}
+				},
+				// 'ref': createdRef
 			}
-			//alert(editor.otVersion)
 			console.log('query', query)
 			var ch = editor.crosis.channels.fileTransforms[editor.activeFile]
 			console.log(editor.activeFile)
-			ch.request(query)
-			editor.justEdited = true
+			if (editor.justEdited || editor.sendQueue.length >= 1) {
+				var addingToQueue = [ch, query]
+				console.log('added to queue', addingToQueue, editor.justEdited, editor.sendQueue.length)
+				editor.sendQueue.push(addingToQueue)
+			} else {
+				console.log('<- ot,', query)
+				editor.justEdited = true
+				ch.request(query)
+				// console.log('<<- ot,')
+			}
 
 			//console.log(JSON.stringify(newOps))
+		} else {
+			console.log('bruh', e, aceEditor.curOp)
 		}
 	})
 }
@@ -94,7 +127,7 @@ function getSkip(row, column, text) {
 	const lastLine = slicedLines.slice(-1).pop()
 	const joinedLines = slicedLines.join('\n')
 	const skip = joinedLines.length - (lastLine.length - column)
-	console.log('skip', row, column, skip, joinedLines)
+	// console.log('skip', row, column, skip, joinedLines)
 	return skip
 }
 
@@ -122,12 +155,11 @@ function deleteText(startPos, deleteAmount) {
 }
 
 
-function processOt(otData) {
+async function processOt(otData) {
 	const version = otData.version || 0
 	editor.otVersion = version
 	if (editor.justEdited) {
-		//alert('just edited')
-		editor.justEdited = false
+		console.log('just edited, throwing away ot', otData)
 		return
 	}
 	const ops = otData.ops
@@ -143,25 +175,64 @@ function processOt(otData) {
 	}
 }
 
+async function sendFromQueue() {
+	if (editor.sendQueue.length >= 1) {
+		const data = editor.sendQueue.shift()
+		const ch = data[0]
+		var query = data[1]
+		query.ot.version = editor.otVersion
+		console.log('taken from queue', data, editor.sendQueue)
+		if (editor.sendQueue.length == 0)
+			editor.justEdited = false
+		editor.sendingRequestFromQueue = true
+		console.log('<- ot', query)
+		editor.justEdited = true
+		await ch.request(query)
+		console.log('<<- ot')
+		editor.sendingRequestFromQueue = false
+	}
+}
+
 function openFile(fileName) {
 	const fileTransformCh = editor.crosis.client.openChannel({ // transforming files
 		service: 'ot',
 		name: 'ot:' + fileName
 	});
+
+	fileTransformCh.request({
+		otLinkFile: {
+			file: {
+				path: fileName
+			}
+		}
+	})
+
 	editor.crosis.channels.fileTransforms[fileName] = fileTransformCh
 	editor.activeFile = fileName
 
-	fileTransformCh.on('command', command => {
-		console.log('ot', command)
+	fileTransformCh.on('command', async (command) => {
+		console.log('-> ot', command)
 		if (command.ot) {
 			processOt(command.ot)
+		} else if (command.ok) {
+			editor.justEdited = false
+			console.log('just gotten edit confirmation', command)
+			sendFromQueue()
+
 		} else if (command.otstatus) {
 			const contents = command.otstatus.contents
-			const filePath = command.otstatus.linkedFile.path
+			const filePath = command.otstatus.linkedFile ? command.otstatus.linkedFile.path : editor.defaultFile
+
 			editor.otVersion = command.otstatus.version
 			insertText(contents, getRowColumn(0))
 		}
 	});
+}
+
+function setupRunButton() {
+	window.editor.runButtonEl.addEventListener('click', () => {
+		
+	})
 }
 
 async function setupCrosis() {
@@ -176,6 +247,10 @@ async function setupCrosis() {
 			port: '443'
 		}
 	});
+	client.on('close', () => {
+		console.log('Closed! Trying to reconnect...')
+		setupCrosis()
+	})
 	console.log('connected')
 	
 	const execCh = client.openChannel({ // shell commands
@@ -196,18 +271,32 @@ async function setupCrosis() {
 	const lspCh = client.openChannel({ // language server (?)
 		service: 'lsp'
 	});
+	const packagerCh = client.openChannel({
+		service: 'packager3'
+	})
+	// const gcsfilesCh = client.openChannel({ // language server (?)
+	// 	service: 'gcsfiles'
+	// });
+	
 	editor.crosis = {}
-	editor.crosis.channels = {}
-	editor.crosis.channels.files = filesCh
-	editor.crosis.channels.fileTransforms = {}
+	editor.crosis.channels = {
+		files: filesCh,
+		packager: packagerCh,
+		fileTransforms: {},
+		// gcsfiles: gcsfilesCh
+	}
 	editor.crosis.client = client
 	editor.otVersion = 0
 	editor.justEdited = false
+	editor.sendingRequestFromQueue = false
+	editor.sendQueue = []
 
-	openFile('main.py')
+	openFile(editor.defaultFile)
 
 	interpreterCh.on('command', command => {
 		console.log('interp', command)
+		termOutput(JSON.stringify(command))
+		
 	});
 
 
@@ -222,6 +311,9 @@ async function setupCrosis() {
 			//editor.editorEl.innerText = fileContent
 		}
 	});
+	// gcsfilesCh.on('command', command => {
+	// 	console.log('gcsfiles', gcsfilesCh)
+	// })
 
 	// await interpreterCh.request({
 	// 	runMain: {}
@@ -246,30 +338,56 @@ async function setupCrosis() {
 	 	}
 	}); 
 	*/
-	// await fileTransformCh.request({
-	// 	otLinkFile: {
-	// 		file: {
-	// 			path: 'main.py'
-	// 		}
-	// 	}
-	// })
+
 	
 
 	// client.close();
 
 
 }
+
+function runRepl() {
+	
+}
+
 addEventListener('DOMContentLoaded', () => {
 	window.editor = {
 		editorEl: document.getElementById(editorElId),
-		channels: {}
+		terminalEl: document.getElementById(terminalElId),
+		runButtonEl: document.getElementById(runButtonElId),
+		channels: {},
+		defaultFile: window.replData.fileNames[0]
 	}
+
+	
 	
 	setupAce()
 	setupCrosis()
-
+	addDefaultFiles()
+	setupRunButton()
 })
 
 function intArrayToString(intArray){
 	return String.fromCharCode.apply(null, intArray);
+}
+
+function addFileToList(fileName, onclick) {
+	var fileItemListEl = document.getElementsByClassName('fileItemList')[0]
+	var fileItemEl = document.createElement('li')
+	fileItemEl.classList.add('fileItem')
+	fileItemEl.innerText = fileName
+	fileItemListEl.appendChild(fileItemEl)
+	if (onclick)
+		fileItemEl.addEventListener('click', onclick)
+}
+
+function addDefaultFiles() {
+	for (const fileName of window.replData.fileNames) {
+		addFileToList(fileName)
+	}
+}
+function termOutput(contents) {
+	var newLine = document.createElement('p')
+	newLine.innerText = contents
+	editor.terminalEl.appendChild(newLine)
 }

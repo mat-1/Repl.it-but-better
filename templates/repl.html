@@ -13,6 +13,16 @@ window.token = "{{ token }}"
 </script>
 {% endblock %}
 {% block main %}
-<pre id="editor">
-</pre>
+<div class="panes">
+	<div class="pane" id="headerBar">
+		<button id="runButton">Run</button>
+	</div>
+	<ul class="pane fileItemList">
+
+	</ul>
+	<pre class="pane" id="editor"></pre>
+	<div class="pane" id="terminal">
+		hi
+	</div>
+</div>
 {% endblock %}

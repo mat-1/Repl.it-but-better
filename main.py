@@ -11,6 +11,6 @@ if not key: # if there's no api key set then show tutorial
 	print('3) create a file called .env')
 	print('4) inside that file put:')
 	print('key=YOURAPIKEY\nusername=YOURUSERNAME')
-	print('(replacing YOURAPIKEY and YOURUSERNAME with your api key)')
+	print('(replacing YOURAPIKEY with your api key and YOURUSERNAME with your Repl.it username)')
 else:
 	server.start()

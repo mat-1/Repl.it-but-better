@@ -30,6 +30,7 @@ async def get_request(url, cookies={}):
 		return r
 
 async def login(username, password):
+	print('logging in')
 	r = await post_request(
 		'/login',
 		{

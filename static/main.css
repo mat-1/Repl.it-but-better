@@ -23,3 +23,8 @@ main {
 .replItemIcon {
 	height: 1em;
 }
+#terminal {
+	background-color: #000000;
+	color: #ffffff;
+	font-family: Monospace;
+}

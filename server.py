@@ -68,6 +68,8 @@ async def view_repl(request):
 
 @web.middleware
 async def middleware(request, handler):
+	if '--' in str(request.url):
+		return web.HTTPFound(str(request.url).replace('--', '.'))
 	sid = request.cookies.get('sid')
 	request.sid = sid
 
